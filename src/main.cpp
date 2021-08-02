@@ -1,7 +1,5 @@
 #include "stereokit.h"
 #include "stereokit_ui.h"
-#include <librealsense2/h/rs_sensor.h>
-#include <librealsense2/rs.hpp>
 #include <vector>
 using namespace sk;
 
@@ -100,25 +98,10 @@ void log_window() {
   ui_window_end();
 }
 
-// int setup_realsense_thing() {
-
-//   // Start streaming with default recommended configuration
-//   pipe = new rs2::pipeline();
-//   pipe->start();
-//   return 0;
-// }
-
-// Declare pointcloud object, for calculating pointclouds and texture mappings
-rs2::pointcloud pc;
-// We want the points object to be persistent so we can display the last cloud
-// when a frame drops
-rs2::points points;
 
 static color32 line_color = {140, 140, 140, 255};
 // static color32 line_color = {0, 0, 0, 255};
 static float line_size = 0.001f;
-
-int realsense_thing_one_frame(rs2::pipeline pipe) { return 0; }
 
 int main() {
   log_subscribe(on_log);
@@ -133,160 +116,12 @@ int main() {
 
   common_init();
 
-  // Declare RealSense pipeline, encapsulating the actual device and sensors
-  rs2::pipeline pipe;
-  rs2::config cfg;
-  rs2::pipeline_profile myProf;
-  rs2::context ctx;
-  int width = 640;
-  int height = 360;
-
-  cfg.disable_all_streams();
-  cfg.enable_stream(rs2_stream::RS2_STREAM_DEPTH, width, height, RS2_FORMAT_Z16,
-                    90);
-
-  pipe.start(cfg);
-  bool has_thing = 0;
-
-  mesh_t depth_mesh = mesh_create();
-
-  vert_t *depthmap = (vert_t *)calloc(height * width, sizeof(vert_t));
-  vind_t *depthmapind = (vind_t *)calloc((height * width) * 6, sizeof(vind_t));
-
-  material_t depth_material = material_copy(material_find(default_id_material));
-  material_set_cull(depth_material, cull_none);
-  material_set_color(depth_material, "color", color128{255.0f,0,1.0f, 255.0f});
-  material_set_color(depth_material, "color", color128{3.0f,3.0f,3.0f, 0.0f});
-  // material_set_color(depth_material, "color", color128{0.0f,0.0f,0.0f, 2550.0f});
-
-
   scene_set_active(demos[0]);
 
   while (sk_step([]() {
     scene_update();
     common_update();
-  })) {
-    // sk::pose_t hpose = sk::input_head();
-    // Wait for the next set of frames from the camera
-    rs2::frameset frames;
-    //  = pipe.wait_for_frames();
-
-    if (pipe.poll_for_frames(&frames)) {
-
-      auto depth = frames.get_depth_frame();
-
-      // Generate the pointcloud and texture mappings
-      points = pc.calculate(depth);
-      has_thing = true;
-      // printf("Size is %zu\n", points.size());
-      auto v = points.get_vertices();
-      // for (int i = 0; i < points.size() - 1; i++) {
-      //   if (v[i].z && v[i + 1].z) {
-      //     vec3 o = {-v[i].x, v[i].y, -v[i].z};
-      //     vec3 o1 = {-v[i+1].x, v[i+1].y, -v[i+1].z};
-      //     line_add(o, o1, line_color, line_color, line_size);
-      //   }
-      //   // if (v[i].z) {
-      //     vec3 o = {-v[i].x, v[i].y, -v[i].z};
-      //     depthmap[i].pos = o;
-      //     depthmap[i].norm = {0,0,1};
-      //     depthmap[i].col = {1,1,1,1};
-      //     depthmap[i].uv = {1,1};
-      //   // } else {
-      //   //   depthmap[i].pos.z = (float)false;
-      //   // }
-      // }
-      for (int y = 0; y < height; y++) {
-        for (int x = 0; x < width; x++) {
-          int i = (x) + (y)*width;
-          if (v[i].z) {
-            vec3 o = {-v[i].x, v[i].y, -v[i].z};
-            depthmap[i].pos = o;
-            depthmap[i].norm = {0, 0, 1};
-            depthmap[i].col = {1, 1, 1, 1};
-            depthmap[i].uv = {1, 1};
-          } else {
-            depthmap[i].pos.z = (float)false;
-          }
-          /*
-          if (x < (width - 1) && y < (height - 1)) {
-            // if (v[x + y * width].z && v[x + (y + 1) * width].z) {
-            //   vec3 tl = {-v[x].x, v[i].y, -v[i].z};
-            //   line_add(o, o1, line_color, line_color, line_size);
-            // }
-
-            int idx_tl = (x) + (y * width);
-            int idx_tr = (x + 1) + (y * width);
-            int idx_bl = (x) + (y + 1) * width;
-            int idx_br = (x + 1) + (y + 1) * width;
-
-            vec3 tl = {-v[idx_tl].x, v[idx_tl].y, -v[idx_tl].z};
-            vec3 tr = {-v[idx_tr].x, v[idx_tr].y, -v[idx_tr].z};
-            vec3 bl = {-v[idx_bl].x, v[idx_bl].y, -v[idx_bl].z};
-            vec3 br = {-v[idx_br].x, v[idx_br].y, -v[idx_br].z};
-            if (v[idx_tl].z && v[idx_tr].z)
-              line_add(tl, tr, line_color, line_color, line_size);
-
-            if (v[idx_tl].z && v[idx_bl].z)
-              line_add(tl, bl, line_color, line_color, line_size);
-            // line_add(tr, br, line_color, line_color, line_size);
-            // line_add(bl, br, line_color, line_color, line_size);
-          }*/
-        }
-      }
-      int ind = 0;
-      for (int y = 0; y < height; y++) {
-        for (int x = 0; x < width; x++) {
-
-          // Create triangle face indices from the current vertex, and the
-          // vertices on the next row and column! Since there is no 'next' row
-          // and column on the last row and column, we guard this with a check
-          // for size-1.
-          if (x < width - 1 && y < height - 1) {
-            // 1
-            // |\
-          // | \
-          // |__\
-          // 2   3
-            if (depthmap[x + y * width].pos.z &&
-                depthmap[x + (y + 1) * width].pos.z &&
-                depthmap[(x + 1) + (y + 1) * width].pos.z) {
-              depthmapind[ind++] = (uint)((x) + (y)*width);
-              depthmapind[ind++] = (uint)((x) + (y + 1) * width);
-              depthmapind[ind++] = (uint)((x + 1) + (y + 1) * width);
-            }
-            // 1 __ 2
-            //  \  |
-            //   \ |
-            //    \|
-            //     3
-            if (depthmap[x + y * width].pos.z &&
-                depthmap[(x + 1) + (y)*width].pos.z &&
-                depthmap[(x + 1) + (y + 1) * width].pos.z) {
-
-              depthmapind[ind++] = ((x) + (y)*width);
-              depthmapind[ind++] = ((x + 1) + (y)*width);
-              depthmapind[ind++] = ((x + 1) + (y + 1) * width);
-            }
-          }
-        }
-      }
-      // printf("Doing bad thign %i\n", width*height);
-      mesh_set_verts(depth_mesh, depthmap, width * height);
-      mesh_set_inds(depth_mesh, depthmapind, ind);
-    }
-
-    if (has_thing) {
-      hierarchy_push(pose_matrix(*input_head()));
-      hierarchy_push(matrix_trs({0,0,0},quat_from_angles(0, 0, 0)));
-      hierarchy_push(matrix_trs(vec3{mm2m*-80.5f, mm2m*-44.2f, mm2m*-67.9f}));
-      render_add_mesh(depth_mesh, depth_material,
-                      matrix_identity);
-      hierarchy_pop();
-      hierarchy_pop();
-      hierarchy_pop();
-    }
-  };
+  })) { };
 
   scene_shutdown();
   common_shutdown();
