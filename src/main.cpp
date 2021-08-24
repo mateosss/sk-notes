@@ -12,6 +12,8 @@ using namespace sk;
 
 #include <stdio.h>
 
+#include <unistd.h>
+
 #include <list>
 #include <string>
 
@@ -22,11 +24,11 @@ model_t floor_model;
 
 sk::bool32_t hand_mesh = true;
 
-sk::bool32_t hand_axes = false;
+sk::bool32_t hand_axes = true;
 
-sk::bool32_t hand_lines = false;
+sk::bool32_t hand_lines = true;
 
-sk::bool32_t leftright = false;
+sk::bool32_t leftright = true;
 
 material_t line_hand_mat1;
 
@@ -98,7 +100,6 @@ void log_window() {
   ui_window_end();
 }
 
-
 static color32 line_color = {140, 140, 140, 255};
 // static color32 line_color = {0, 0, 0, 255};
 static float line_size = 0.001f;
@@ -121,7 +122,8 @@ int main() {
   while (sk_step([]() {
     scene_update();
     common_update();
-  })) { };
+  })) {
+  };
 
   scene_shutdown();
   common_shutdown();
@@ -161,7 +163,7 @@ void common_init() {
   demo_select_pose.orientation = quat_lookat(vec3_forward, vec3_zero);
 
   line_hand_mat1 = material_find(default_id_material_hand);
-  material_set_color(line_hand_mat1, "color", {1.0, 1.0, 0.0, 1});
+  material_set_color(line_hand_mat1, "color", {1.0, 1.0, 0.0, .2f});
 }
 
 void draw_axis(pose_t &pose, float size, float thickness) {
@@ -184,8 +186,9 @@ void draw_axis(pose_t &pose, float size, float thickness) {
 bool draw_hand_axes() {
   for (int i = 0; i < handed_max; i++) {
     const hand_t *hand = input_hand((handed_)i);
-    if (hand->tracked_state == button_state_inactive)
+    if (hand->tracked_state == button_state_inactive) {
       continue;
+    }
 
     for (int finger = 0; finger < 5; finger++) {
       for (int joint = 0; joint < 5; joint++) {
@@ -237,15 +240,22 @@ void draw_hand_lines() {
 }
 
 void hand_window(sk::handed_ hand, const char *hi) {
-  vec3 left_position = input_hand(hand)->palm.position;
-  quat head_potition = input_head()->orientation;
+  const hand_t *hande = input_hand(hand);
+  if (hande->tracked_state == button_state_inactive)
+    return;
+  vec3 left_position = hande->palm.position;
+
+  vec3 head_position = input_head()->position;
   pose_t pose;
-  pose.position = left_position;
-  pose.orientation =
-      quat_mul(head_potition, quat_from_angles(0, 180, 0)); // head_potition;
+  pose.position = (left_position * .9) + (head_position * .1);
+  pose.orientation = quat_lookat(left_position, head_position);
+  // quat_mul(head_potition, quat_from_angles(0, 180, 0)); // head_potition;
   if (input_hand(hand)->tracked_state == button_state_active) {
-    ui_window_begin(hi, pose, vec2{0, 0});
-    ui_window_end();
+    hierarchy_push(pose_matrix(pose));
+    text_add_at(hi, matrix_identity);
+    hierarchy_pop();
+    // ui_window_begin(hi, pose, vec2{0, 0});
+    // ui_window_end();
   }
 }
 
@@ -297,8 +307,13 @@ void common_update() {
     hand_window(sk::handed_right, "right");
   }
 
+  bool left_active = input_hand(sk::handed_left)->tracked_state;
+  bool right_active = input_hand(sk::handed_right)->tracked_state;
+  printf("actives %i %i\n", left_active, right_active);
+
   ruler_window();
   log_window();
+
 }
 
 void common_shutdown() {

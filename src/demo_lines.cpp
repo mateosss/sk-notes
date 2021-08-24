@@ -66,11 +66,11 @@ void demo_lines_palette()
 ///////////////////////////////////////////
 
 void demo_lines_draw() {
-	const hand_t *hand = input_hand(handed_left);
+	const hand_t *hand = input_hand(handed_right);
 	vec3          tip  = hand->fingers[1][4].position;
 	tip = line_prev_tip + (tip-line_prev_tip) * 0.3f;
 
-	if ((hand->pinch_state & button_state_just_active) && !ui_is_interacting(handed_left)) {
+	if ((hand->pinch_state & button_state_just_active) && !ui_is_interacting(handed_right)) {
 		
 		if (line_draw.size() > 0)
 			line_list.push_back(line_draw);
