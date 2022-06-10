@@ -18,7 +18,7 @@ project(sk-notes VERSION "0.0.1" LANGUAGES CXX C)
 
 find_package(StereoKitC REQUIRED)
 find_package(Eigen3 3 REQUIRED)
-find_package(realsense2 REQUIRED)
+# find_package(realsense2 REQUIRED)
 
 
 message("Found StereoKitC " ${StereoKitC_Found})
@@ -42,7 +42,6 @@ add_executable(
 
 target_link_libraries(
   sk-notes
-  -L/usr/local/lib
-  realsense2::realsense2
+  -L$oxrinstall/lib
   StereoKitC
 )

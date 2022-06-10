@@ -110,8 +110,9 @@ int main() {
 
   sk_settings_t settings = {};
   settings.app_name = "StereoKit C";
-  settings.assets_folder = "/2/XR/skNotes/Assets";
+  settings.assets_folder = "/3/sk-notes/Assets";
   settings.display_preference = display_mode_mixedreality;
+  settings.overlay_app = true;
   if (!sk_init(settings))
     return 1;
 
@@ -309,7 +310,7 @@ void common_update() {
 
   bool left_active = input_hand(sk::handed_left)->tracked_state;
   bool right_active = input_hand(sk::handed_right)->tracked_state;
-  printf("actives %i %i\n", left_active, right_active);
+  // printf("actives %i %i\n", left_active, right_active);
 
   ruler_window();
   log_window();

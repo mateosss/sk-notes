@@ -32,7 +32,7 @@ void demo_ui_update() {
 
 	sk::vec3 head_to_hand;
 	head_to_hand = hand_right->palm.position - sk::input_head()->position;
-	printf("%f %f %f\n", head_to_hand.x, head_to_hand.y, head_to_hand.z);
+	// printf("%f %f %f\n", head_to_hand.x, head_to_hand.y, head_to_hand.z);
 
 	// sk::vec3 palm_looking_at = sk::vec3(hand_right->palm.orientation);
 
